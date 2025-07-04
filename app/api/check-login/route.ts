@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       deleteLocation(userId).catch((err) =>
         console.error('❌ Redis auto-delete error:', err)
       );
-    }, 15 * 60 * 100000);
+    }, 15 * 60 * 1000);
 
     console.log('🆕 New user stored in Redis');
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({ user: newUser, status: 'created' });
     response.headers.set(
       'Set-Cookie',
-      `user=${encodeURIComponent(userCookie)}; Path=/; Max-Age=900; HttpOnly`
+      `user=${encodeURIComponent(userCookie)}; Path=/; Max-Age=86400; HttpOnly`
     );
 
     return response;
