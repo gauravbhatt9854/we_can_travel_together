@@ -1,5 +1,3 @@
-// app/lib/locationStore.ts
-
 import redis from "./redis";
 
 export interface LocationData {

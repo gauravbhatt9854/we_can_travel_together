@@ -1,13 +1,25 @@
-//middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
- 
-// This function can be marked `async` if using `await` inside
+// middleware.ts
+import { NextRequest, NextResponse } from 'next/server';
+
 export function middleware(request: NextRequest) {
-  return NextResponse.redirect(new URL('/home', request.url))
+  const user = request.cookies.get('user');
+
+  const url = request.nextUrl.clone();
+
+  // Allow access to login page freely
+  if (url.pathname === '/login') return NextResponse.next();
+  if (url.pathname === '/api/check-login') return NextResponse.next();
+
+  // Not logged in → redirect to login
+  if (!user) {
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  // Logged in → allow
+  return NextResponse.next();
 }
- 
-// See "Matching Paths" below to learn more
+
 export const config = {
-  matcher: '/about/:path*',
-}
+  matcher: ['/((?!_next|favicon.ico).*)'],
+};

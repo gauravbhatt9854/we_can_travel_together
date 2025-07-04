@@ -16,7 +16,7 @@ interface Payload {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as Payload;
+    const body = (await req.json()) as Payload;
     const { userId, name, currentLocation, destination } = body;
 
     if (!userId || !name || !currentLocation || !destination) {
@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
 
     const distanceKm = calculateDistance(currentLocation, destination);
 
-    // ✅ Await the async function
     await addLocation({
       userId,
       name,
