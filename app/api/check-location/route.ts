@@ -3,18 +3,31 @@ import { getAllLocations, LocationData } from '@/app/lib/locationStore';
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get('userId');
+
   if (!userId) {
-    return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
+    // 🔴 Missing userId — treat as invalid session
+    const response = NextResponse.redirect(new URL('/login', req.url));
+    response.headers.set(
+      'Set-Cookie',
+      `user=; Path=/; Max-Age=0; HttpOnly`
+    );
+    return response;
   }
 
   const allEntries: LocationData[] = await getAllLocations();
   const myEntry = allEntries.find((entry) => entry.userId === userId);
 
   if (!myEntry) {
-    return NextResponse.json({ exists: false });
+    // 🧼 User not found in location data — clear cookie and redirect
+    const response = NextResponse.redirect(new URL('/login', req.url));
+    response.headers.set(
+      'Set-Cookie',
+      `user=; Path=/; Max-Age=0; HttpOnly`
+    );
+    return response;
   }
 
-  // Check that 'from' and 'to' have valid names and coordinates
+  // ✅ Check location data
   const hasValidLocations =
     myEntry.from?.name?.trim() &&
     myEntry.to?.name?.trim() &&
@@ -29,7 +42,6 @@ export async function GET(req: NextRequest) {
 
   const MAX_DISTANCE_KM = 5;
 
-  // 🔍 Find nearby people based on BOTH from & to being within 3km
   const nearbyPeople = allEntries.filter((entry) => {
     if (entry.userId === userId) return false;
 
@@ -49,9 +61,9 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// 📍 Helper function: Haversine formula
+// Haversine helpers
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of Earth in km
+  const R = 6371;
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
   const a =

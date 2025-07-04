@@ -1,7 +1,8 @@
 'use client';
 import React from 'react';
 
-interface PersonCardProps {
+interface Props {
+  userId: string;
   name: string;
   from: string;
   to: string;
@@ -9,14 +10,16 @@ interface PersonCardProps {
   match?: string;
 }
 
-const PersonCard: React.FC<PersonCardProps> = ({ name, from, to, distanceKm, match }) => (
-  <div className="p-3 border rounded bg-white shadow-sm mb-3">
-    <p><strong>Name:</strong> {name}</p>
-    <p><strong>From:</strong> {from}</p>
-    <p><strong>To:</strong> {to}</p>
-    {match && <p><strong>Match:</strong> {match}</p>}
-    <p><strong>Distance:</strong> {distanceKm} km</p>
-  </div>
-);
+const PersonCard: React.FC<Props> = ({userId , name, from, to, distanceKm }) => {
+  return (
+    <div className="bg-white p-3 border rounded shadow-sm">
+      <p><strong>Phone:</strong> {userId}</p>
+      <p><strong>Name:</strong> {name}</p>
+      <p><strong>From:</strong> {from}</p>
+      <p><strong>To:</strong> {to}</p>
+      <p className="text-sm text-gray-500">Within {distanceKm} km match</p>
+    </div>
+  );
+};
 
 export default PersonCard;

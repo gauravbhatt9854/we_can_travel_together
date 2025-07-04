@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       deleteLocation(userId).catch((err) =>
         console.error('❌ Redis auto-delete error:', err)
       );
-    }, 15 * 60 * 1000);
+    }, 15 * 60 * 100000);
 
     console.log('🆕 New user stored in Redis');
 

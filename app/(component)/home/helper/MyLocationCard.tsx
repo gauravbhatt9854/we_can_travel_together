@@ -36,7 +36,7 @@ const MyLocationCard: React.FC<MyLocationCardProps> = ({
 
       if (res.ok) {
         alert('Location deleted.');
-        onDeleted(); // Tell parent to refresh
+        onDeleted(); // Parent refresh
       } else {
         const err = await res.json();
         alert(`Delete failed: ${err?.error}`);

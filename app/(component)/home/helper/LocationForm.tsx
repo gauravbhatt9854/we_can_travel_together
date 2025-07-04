@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import MyLocationCard from './MyLocationCard';
 import LocationInput from './LocationInput';
-import Dashboard from './Dashboard';
+import PeopleNearbyList from './PeopleNearbyList';
+
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
@@ -65,30 +67,52 @@ const LocationForm: React.FC = () => {
   }, [user])
 
   // Refetch user location and check if from/to are set
+
   const refetchUserLocation = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch(`/api/check-location?userId=${user.id}`);
-      const data = await res.json();
+  if (!user) return;
+  try {
+    const res = await fetch(`/api/check-location?userId=${user.id}`, {
+      method: 'GET',
+      redirect: 'follow',
+    });
 
-      if (data.exists && data.entry) {
-        setAlreadyExists(true);
-        setResults([data.entry, ...(data.nearbyPeople || [])]);
-
-        const hasLocations =
-          data.entry.from?.name?.trim().length > 0 &&
-          data.entry.to?.name?.trim().length > 0;
-
-        setHasValidLocations(hasLocations);
-      } else {
-        setAlreadyExists(false);
-        setHasValidLocations(false);
-        setResults([]);
-      }
-    } catch (err) {
-      console.error('Check location failed:', err);
+    // 🔴 If redirected to login (e.g., cookie was cleared), handle it
+    if (res.redirected && res.url.includes('/login')) {
+      setUser(null); // Logout on client
+      window.location.href = '/login'; // Redirect to login
+      return;
     }
-  };
+
+    // 🟡 Or if response was unauthorized
+    if (res.status === 401 || res.status === 403) {
+      setUser(null);
+      window.location.href = '/login';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.exists && data.entry) {
+      setAlreadyExists(true);
+      setResults([data.entry, ...(data.nearbyPeople || [])]);
+
+      const hasLocations =
+        data.entry.from?.name?.trim().length > 0 &&
+        data.entry.to?.name?.trim().length > 0;
+
+      setHasValidLocations(hasLocations);
+    } else {
+      setAlreadyExists(false);
+      setHasValidLocations(false);
+      setResults([]);
+    }
+  } catch (err) {
+    console.error('Check location failed:', err);
+    setUser(null);
+    window.location.href = '/login';
+  }
+};
+
 
   // Run on user load
   useEffect(() => {
@@ -214,41 +238,25 @@ const LocationForm: React.FC = () => {
           </div>
 
           {/* Shared Post */}
-          {alreadyExists && results.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
-              <h2 className="font-bold text-green-700 mb-2">You've Shared Your Location</h2>
-              <p><strong>Name:</strong> {results[0].name}</p>
-              <p><strong>From:</strong> {results[0].from.name}</p>
-              <p><strong>To:</strong> {results[0].to.name}</p>
-              <p><strong>Distance:</strong> {results[0].distanceKm} km</p>
 
-              {/* Optional delete/reset button */}
-              <button className="mt-3 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                Delete My Post
-              </button>
-            </div>
+          {alreadyExists && results.length > 0 && (
+            <MyLocationCard
+              userId={results[0].userId}
+              name={results[0].name}
+              from={results[0].from.name}
+              to={results[0].to.name}
+              distanceKm={results[0].distanceKm}
+              onDeleted={refetchUserLocation}
+            />
           )}
         </div>
 
         {/* RIGHT: Nearby People */}
         <div className="bg-gray-50 p-4 rounded-xl border shadow max-h-[500px] overflow-y-auto">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">Nearby People</h2>
-
-          {results.slice(1).length === 0 ? (
-            <p className="text-sm text-gray-500">No nearby matches yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {results.slice(1).map((person, i) => (
-                <div key={i} className="bg-white p-3 border rounded shadow-sm">
-                  <p><strong>Name:</strong> {person.name}</p>
-                  <p><strong>From:</strong> {person.from.name}</p>
-                  <p><strong>To:</strong> {person.to.name}</p>
-                  <p className="text-sm text-gray-500">Within 3km match</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <PeopleNearbyList people={results.slice(1)} />
         </div>
+
       </div>
     </div>
   );

@@ -44,10 +44,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Optional: also store locally for quick access
       localStorage.setItem('user', JSON.stringify(data.user));
-
-      // ✅ No need to set cookie manually — backend sets it
       router.push('/');
     } catch (err) {
       console.error(err);
@@ -58,46 +55,47 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6 space-y-6">
+        <h1 className="text-2xl font-bold text-center text-blue-700">Welcome Back!</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Your Name"
-          className="border p-2 mb-2 w-full"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Your Name"
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          className="border p-2 mb-2 w-full"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
-        <input
-          type="password"
-          placeholder="4-digit Password"
-          className="border p-2 mb-4 w-full"
-          maxLength={4}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password"
-        />
+          <input
+            type="password"
+            placeholder="4-digit Password"
+            maxLength={4}
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 w-full"
-          disabled={loading}
-        >
-          {loading ? 'Checking...' : 'Submit'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {loading ? 'Checking...' : 'Login'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

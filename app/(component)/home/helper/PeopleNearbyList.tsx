@@ -27,6 +27,7 @@ const PeopleNearbyList: React.FC<Props> = ({ people }) => {
       {people.map((person, idx) => (
         <PersonCard
           key={idx}
+          userId={person.userId}
           name={person.name}
           from={person.from.name}
           to={person.to.name}
