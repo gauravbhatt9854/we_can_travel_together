@@ -24,6 +24,8 @@ export async function getAllLocations(): Promise<LocationData[]> {
   return Object.values(all).map((entry) => JSON.parse(entry));
 }
 
+
+// 🧹 Soft delete: reset from/to/distance
 export async function deleteLocation(userId: string): Promise<void> {
   const raw = await redis.hget(LOCATION_KEY, userId);
   if (!raw) return;
@@ -45,8 +47,8 @@ export async function deleteLocation(userId: string): Promise<void> {
   }
 }
 
+// 🗑️ Hard delete: remove user field completely
 export async function deleteUser(userId: string): Promise<void> {
-  const key = `user:${userId}`;
-  console.log(key);
-  await redis.del(key); // 🔥 Fully deletes the Redis key
+  await redis.hdel(LOCATION_KEY, userId);
+  console.log(`❌ Deleted user: ${userId} from Redis`);
 }

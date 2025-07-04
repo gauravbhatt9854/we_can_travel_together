@@ -3,9 +3,13 @@ import Header from "./(component)/header/Header";
 
 export default function Home() {
   return (
-    <div >
-      <Header></Header>
-      <LocationForm></LocationForm>
+
+    <div className="min-h-screen w-full overflow-hidden flex flex-col">
+      <Header />
+      <div className="flex-1 overflow-auto">
+        <LocationForm />
+      </div>
     </div>
+
   );
 }

@@ -196,7 +196,7 @@ const LocationForm: React.FC = () => {
   if (user === null) return <p className="p-6">Loading user session...</p>;
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6">
+    <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-semibold text-center text-blue-700 mb-6">
         Travel Planner (Mapbox)
       </h1>

@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
     const cookieValue = decodeURIComponent(userCookie.split('=')[1]);
     const { phone } = JSON.parse(cookieValue);
 
+    console.log("phone is " , phone);
+
     if (!phone) {
       return NextResponse.json({ error: 'Invalid user data' }, { status: 400 });
     }
