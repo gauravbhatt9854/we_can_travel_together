@@ -1,9 +1,9 @@
-name: Deploy App with Docker & Minimal .env
+name: Deploy Docker App with Shared Image and Secure .env
 
 on:
   push:
     branches:
-      - master
+      - master  # or your deployment branch
 
 jobs:
   deploy:
@@ -34,31 +34,29 @@ jobs:
             my-app-image.tar \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/
 
-      - name: Deploy containers using shared image and filtered .env
+      - name: Deploy containers on server with shared .env
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
 
               cd /home/${{ secrets.SERVER_USER }}
 
-              # ✅ Create .env file from required secrets only
-              cat <<EOT > .env
-NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
-REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-REDIS_PORT=${{ secrets.REDIS_PORT }}
-REDIS_HOST=${{ secrets.REDIS_HOST }}
-EOT
+              # ✅ Create .env file from secrets
+              echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
+              echo "REDIS_HOST=${REDIS_HOST}" >> .env
+              echo "REDIS_PORT=${REDIS_PORT}" >> .env
+              echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
 
-              # ✅ Load Docker image
+              # ✅ Load the Docker image
               docker load -i my-app-image.tar
 
-              # ✅ Remove old containers
+              # ✅ Remove existing containers
               for i in \$(seq 1 5); do
                 docker rm -f instance\$i || true
               done
 
-              # ✅ Start 5 containers with .env file and internal network
+              # ✅ Run 5 containers using the same image & env
               for i in \$(seq 1 5); do
                 docker run -d \
                   --name instance\$i \
@@ -67,3 +65,8 @@ EOT
                   my-app-image
               done
           EOF
+        env:
+          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
