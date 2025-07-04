@@ -3,15 +3,15 @@ name: Deploy Docker App with Shared Image and Secure .env
 on:
   push:
     branches:
-      - master  # or your deployment branch
+      - master  # Set to your deployment branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug SSH Info
-        run: echo "Connecting to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
+      - name: Show Connection Info
+        run: echo "Deploying to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,31 +32,31 @@ jobs:
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             scp -o StrictHostKeyChecking=no \
             my-app-image.tar \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/my-app-image.tar
 
-      - name: Deploy containers on server with shared .env
+      - name: Deploy containers on server with .env file
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
 
-              cd /home/${{ secrets.SERVER_USER }}
+              cd ~
 
-              # ✅ Create .env file from secrets
+              # ✅ Write .env securely from GitHub secrets
               echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
               echo "REDIS_HOST=${REDIS_HOST}" >> .env
               echo "REDIS_PORT=${REDIS_PORT}" >> .env
               echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
 
-              # ✅ Load the Docker image
+              # ✅ Load Docker image
               docker load -i my-app-image.tar
 
-              # ✅ Remove existing containers
+              # ✅ Stop & remove existing containers
               for i in \$(seq 1 5); do
                 docker rm -f instance\$i || true
               done
 
-              # ✅ Run 5 containers using the same image & env
+              # ✅ Start 5 instances with shared .env
               for i in \$(seq 1 5); do
                 docker run -d \
                   --name instance\$i \
