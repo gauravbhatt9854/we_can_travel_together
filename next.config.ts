@@ -1,19 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig = {
-  experimental: {
-    allowedDevOrigins: [/^https:\/\/.*\.golu\.codes$/],
-  },
+const nextConfig: NextConfig = {
+  allowedDevOrigins: [/^https:\/\/.*\.golu\.codes$/], // ✅ Move it to top-level
 };
 
 export default nextConfig;
-
-
-// import type { NextConfig } from "next";
-
-// const nextConfig: NextConfig = {
-//   // koi experimental flag mat rakho agar jarurat nahi
-// };
-
-// export default nextConfig;
-
