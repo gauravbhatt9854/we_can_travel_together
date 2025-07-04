@@ -1,9 +1,9 @@
-name: Deploy Docker App with Shared Image and .env
+name: Deploy Docker App to ARM64 Server
 
 on:
   push:
     branches:
-      - master  # <-- your deployment branch
+      - master
 
 jobs:
   deploy:
@@ -13,13 +13,22 @@ jobs:
       - name: Show Target Server Info
         run: echo "Deploying to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
 
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: docker build -t my-app-image .
+      - name: Set up Docker Buildx (Multi-Arch)
+        uses: docker/setup-buildx-action@v3
 
-      - name: Save Docker image to tarball
+      - name: Build Docker Image for ARM64 and Export
+        run: |
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/arm64 \
+            -t my-app-image \
+            --output type=docker \
+            .
+
+      - name: Save Docker Image to Tarball
         run: docker save my-app-image -o my-app-image.tar
 
       - name: Install sshpass
@@ -27,14 +36,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y sshpass
 
-      - name: Copy Docker image to server
+      - name: Copy Docker Image to Server
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             scp -o StrictHostKeyChecking=no \
             my-app-image.tar \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/my-app-image.tar
 
-      - name: Deploy on server using shared .env and coolify network
+      - name: Deploy Containers with .env and Coolify Network
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
@@ -42,7 +51,7 @@ jobs:
 
               cd ~
 
-              echo "[`date`] ✅ Creating .env from secrets"
+              echo "[`date`] ✅ Writing .env file"
               echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
               echo "REDIS_HOST=${REDIS_HOST}" >> .env
               echo "REDIS_PORT=${REDIS_PORT}" >> .env
@@ -56,7 +65,7 @@ jobs:
                 docker rm -f instance$i || true
               done
 
-              echo "[`date`] 🚀 Starting containers on 'coolify' network"
+              echo "[`date`] 🚀 Starting 5 containers on 'coolify' network"
               for i in $(seq 1 5); do
                 docker run -d \
                   --name instance$i \
@@ -65,7 +74,7 @@ jobs:
                   my-app-image
               done
 
-              echo "[`date`] ✅ Deployment complete"
+              echo "[`date`] ✅ Deployment Finished"
           EOF
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
