@@ -11,7 +11,9 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
     }
 
+    // Soft-delete: mark deleted and remove lat/lng
     await deleteLocation(userId);
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('DELETE /api/delete-location error:', err);

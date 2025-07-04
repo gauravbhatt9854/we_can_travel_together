@@ -5,32 +5,19 @@ export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get('userId');
 
   if (!userId) {
-    // 🔴 Missing userId — treat as invalid session
-    const response = NextResponse.redirect(new URL('/login', req.url));
-    response.headers.set(
-      'Set-Cookie',
-      `user=; Path=/; Max-Age=0; HttpOnly`
-    );
-    return response;
+    return redirectToLogin(req);
   }
 
   const allEntries: LocationData[] = await getAllLocations();
   const myEntry = allEntries.find((entry) => entry.userId === userId);
 
   if (!myEntry) {
-    // 🧼 User not found in location data — clear cookie and redirect
-    const response = NextResponse.redirect(new URL('/login', req.url));
-    response.headers.set(
-      'Set-Cookie',
-      `user=; Path=/; Max-Age=0; HttpOnly`
-    );
-    return response;
+    return redirectToLogin(req);
   }
 
-  // ✅ Check location data
   const hasValidLocations =
-    myEntry.from?.name?.trim() &&
-    myEntry.to?.name?.trim() &&
+    Boolean(myEntry.from?.name?.trim()) &&
+    Boolean(myEntry.to?.name?.trim()) &&
     typeof myEntry.from.lat === 'number' &&
     typeof myEntry.from.lng === 'number' &&
     typeof myEntry.to.lat === 'number' &&
@@ -61,7 +48,14 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// Haversine helpers
+// 🔁 Cookie cleanup + redirect to login
+function redirectToLogin(req: NextRequest): NextResponse {
+  const response = NextResponse.redirect(new URL('/login', req.url));
+  response.headers.set('Set-Cookie', `user=; Path=/; Max-Age=0; HttpOnly`);
+  return response;
+}
+
+// 📍 Haversine Distance
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = deg2rad(lat2 - lat1);

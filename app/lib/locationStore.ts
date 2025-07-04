@@ -25,5 +25,22 @@ export async function getAllLocations(): Promise<LocationData[]> {
 }
 
 export async function deleteLocation(userId: string): Promise<void> {
-  await redis.hdel(LOCATION_KEY, userId);
+  const raw = await redis.hget(LOCATION_KEY, userId);
+  if (!raw) return;
+
+  try {
+    const entry = JSON.parse(raw);
+
+    const resetUser = {
+      ...entry,
+      from: { name: '', lat: 0, lng: 0 },
+      to: { name: '', lat: 0, lng: 0 },
+      distanceKm: 0,
+    };
+
+    await redis.hset(LOCATION_KEY, userId, JSON.stringify(resetUser));
+    console.log(`🔁 Location reset for user: ${userId}`);
+  } catch (err) {
+    console.error(`❌ Failed to reset user location: ${userId}`, err);
+  }
 }
