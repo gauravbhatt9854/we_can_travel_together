@@ -44,3 +44,9 @@ export async function deleteLocation(userId: string): Promise<void> {
     console.error(`❌ Failed to reset user location: ${userId}`, err);
   }
 }
+
+export async function deleteUser(userId: string): Promise<void> {
+  const key = `user:${userId}`;
+  console.log(key);
+  await redis.del(key); // 🔥 Fully deletes the Redis key
+}

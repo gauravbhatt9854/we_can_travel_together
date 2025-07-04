@@ -1,45 +1,69 @@
-name: Docker Deploy with Internal Network
+name: Deploy App with Docker & Minimal .env
 
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug SSH Info
+        run: echo "Connecting to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
+
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build Docker image
+      - name: Build Docker image from repo
         run: docker build -t my-app-image .
 
       - name: Save Docker image as tarball
         run: docker save my-app-image -o my-app-image.tar
 
-      - name: Copy Docker image to remote server
+      - name: Install sshpass
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no my-app-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/
 
-      - name: Load and start 5 containers in 'coolify' network
+      - name: Copy Docker image to remote server
         run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            docker load -i my-app-image.tar
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            scp -o StrictHostKeyChecking=no \
+            my-app-image.tar \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/${{ secrets.SERVER_USER }}/
 
-            # Stop and remove existing containers
-            for i in $(seq 1 5); do
-              docker rm -f instance$i || true
-            done
+      - name: Deploy containers using shared image and filtered .env
+        run: |
+          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
 
-            # Run 5 containers attached to 'coolify' network
-            for i in $(seq 1 5); do
-              docker run -d \
-                --name instance$i \
-                --network coolify \
-                my-app-image
-            done
+              cd /home/${{ secrets.SERVER_USER }}
+
+              # ✅ Create .env file from required secrets only
+              cat <<EOT > .env
+NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+REDIS_PORT=${{ secrets.REDIS_PORT }}
+REDIS_HOST=${{ secrets.REDIS_HOST }}
+EOT
+
+              # ✅ Load Docker image
+              docker load -i my-app-image.tar
+
+              # ✅ Remove old containers
+              for i in \$(seq 1 5); do
+                docker rm -f instance\$i || true
+              done
+
+              # ✅ Start 5 containers with .env file and internal network
+              for i in \$(seq 1 5); do
+                docker run -d \
+                  --name instance\$i \
+                  --network coolify \
+                  --env-file .env \
+                  my-app-image
+              done
           EOF
