@@ -1,8 +1,6 @@
 // middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const allowedOrigins = [/^https:\/\/.*\.golu\.codes$/];
-
 export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const user = request.cookies.get('user');
@@ -21,17 +19,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logged in → allow + add CORS if allowed origin
-  const origin = request.headers.get('origin') || '';
-  const isAllowed = allowedOrigins.some((regex) => regex.test(origin));
-
-  const response = NextResponse.next();
-
-  if (isAllowed) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-  }
-
-  return response;
+  // Logged in → allow request
+  return NextResponse.next();
 }
 
 export const config = {
