@@ -43,38 +43,38 @@ jobs:
             my-app-image.tar \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/my-app-image.tar
 
-      - name: Deploy Containers with .env and Coolify Network
+      - name: Deploy Containers to Server
         run: |
           sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
 
-              cd ~
+            cd ~
 
-              echo "[`date`] ✅ Writing .env file"
-              echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
-              echo "REDIS_HOST=${REDIS_HOST}" >> .env
-              echo "REDIS_PORT=${REDIS_PORT}" >> .env
-              echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
+            echo "[\`date\`] ✅ Writing .env file"
+            echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
+            echo "REDIS_HOST=${REDIS_HOST}" >> .env
+            echo "REDIS_PORT=${REDIS_PORT}" >> .env
+            echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
 
-              echo "[`date`] 📦 Loading Docker image"
-              docker load -i my-app-image.tar
+            echo "[\`date\`] 📦 Loading Docker image"
+            docker load -i my-app-image.tar
 
-              echo "[`date`] 🧹 Removing old containers"
-              for i in $(seq 1 5); do
-                docker rm -f instance$i || true
-              done
+            echo "[\`date\`] 🧹 Removing old containers"
+            for i in \$(seq 1 5); do
+              docker rm -f instance\$i || true
+            done
 
-              echo "[`date`] 🚀 Starting 5 containers on 'coolify' network"
-              for i in $(seq 1 5); do
-                docker run -d \
-                  --name instance$i \
-                  --network coolify \
-                  --env-file .env \
-                  my-app-image
-              done
+            echo "[\`date\`] 🚀 Starting containers on internal port 3000"
+            for i in \$(seq 1 5); do
+              docker run -d \
+                --name instance\$i \
+                --env-file .env \
+                --network coolify \
+                my-app-image
+            done
 
-              echo "[`date`] ✅ Deployment Finished"
+            echo "[\`date\`] ✅ Deployment Finished"
           EOF
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}

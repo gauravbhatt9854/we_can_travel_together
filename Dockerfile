@@ -12,4 +12,4 @@ RUN npm run build
 
 # ✅ Now you can use `next start`
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run" , "dev"]
