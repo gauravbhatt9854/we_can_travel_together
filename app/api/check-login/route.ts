@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addLocation, getLocation, deleteLocation } from '@/app/lib/locationStore';
+import { addLocation, getLocation, deleteLocation, deleteUser } from '@/app/lib/locationStore';
 
 interface LoginPayload {
   phone: string;
@@ -51,12 +51,22 @@ export async function POST(req: NextRequest) {
 
     await addLocation(newUser);
 
-    // Schedule auto-delete after 15 mins
+    // Schedule auto-delete after 3 hours
     setTimeout(() => {
       deleteLocation(userId).catch((err) =>
         console.error('❌ Redis auto-delete error:', err)
       );
-    }, 15 * 60 * 1000);
+    }, 3 * 60 * 60 * 1000); // 3 hours in milliseconds
+
+
+    // Schedule auto-delete after 24 hours
+    setTimeout(() => {
+      deleteUser(userId).catch((err) =>
+        console.error('❌ Redis auto-delete error:', err)
+      );
+    }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+
 
     console.log('🆕 New user stored in Redis');
 
@@ -64,6 +74,8 @@ export async function POST(req: NextRequest) {
     const userCookie = JSON.stringify({ phone, name });
 
     const response = NextResponse.json({ user: newUser, status: 'created' });
+
+    // 24 hours 
     response.headers.set(
       'Set-Cookie',
       `user=${encodeURIComponent(userCookie)}; Path=/; Max-Age=86400; HttpOnly`

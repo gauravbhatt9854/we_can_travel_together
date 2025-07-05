@@ -1,32 +1,27 @@
-<!-- TRY IT --> 
-https://cab.golu.codes
-
 # 🚕 We Can Cab Together
 
-**We Can Cab Together** is a location-based travel-sharing web app that helps users find others nearby who are traveling to the same destination. This makes it easier to share cabs, autos, or rickshaws and reduce costs — especially useful in urban areas like universities, tech parks, or cities.
+**We Can Cab Together** is a real-time, location-based travel-sharing web app. It helps users find others nearby going to the same destination — ideal for cost-sharing cabs, autos, or rickshaws in colleges, offices, or urban cities.
+
+🔗 **Live Demo**: [https://cab.golu.codes](https://cab.golu.codes)
 
 ---
 
 ## 🔍 Purpose
 
-> Help users find and connect with others going from nearby sources to nearby destinations within a 3 km radius, enabling real-time cab-sharing decisions.
-
----
-
-## 📸 Preview
-
-![UI Screenshot](./public/image.png) <!-- Optional: place your screenshot in project root as preview.png -->
+> Help users connect and travel together from similar starting points to nearby destinations — saving money and time within a 3 km radius.
 
 ---
 
 ## 🧱 Tech Stack
 
-| Tech       | Purpose                                |
-|------------|----------------------------------------|
-| Next.js    | React-based frontend + API routing     |
-| Redis      | In-memory storage of location entries  |
-| Mapbox     | Location autocomplete & geo-matching   |
-| TailwindCSS| Simple, responsive UI styling          |
+| Tech       | Purpose                                      |
+|------------|----------------------------------------------|
+| **Next.js**    | Frontend + API backend in one framework     |
+| **Redis**      | Fast in-memory data store for live users    |
+| **Mapbox**     | Location autocomplete and geocoding         |
+| **TailwindCSS**| Responsive and clean styling                |
+| **Docker**     | Containerized deployment for scalability    |
+| **Caddy/Nginx**| Load balancer across multiple containers    |
 
 ---
 
@@ -34,30 +29,30 @@ https://cab.golu.codes
 
 app/
 ├── (component)/home/helper/
-│ ├── Dashboard.tsx # Your shared + nearby users display
-│ ├── LocationForm.tsx # Main page UI
-│ ├── LocationInput.tsx # Input field with suggestions
-│ ├── MyLocationCard.tsx # Displays your own post
-│ ├── PeopleNearbyList.tsx # List of matching people
-│ └── PersonCard.tsx # Single person card
-│
-├── login/page.tsx # Simple login form
-│
-├── api/
-│ ├── send-location/route.ts # POST user location
-│ ├── check-location/route.ts # GET user and nearby data
-│ ├── delete-location/route.ts # DELETE user's post
-│ ├── get-user/route.ts # GET user from cookie
-│ └── check-login/route.ts # POST login and set cookie
-│
-lib/
-├── locationStore.ts # Add/Get/Delete logic in Redis
-├── redis.ts # Redis connection config
+│ ├── Dashboard.tsx
+│ ├── LocationForm.tsx
+│ ├── LocationInput.tsx
+│ ├── MyLocationCard.tsx
+│ ├── PeopleNearbyList.tsx
+│ └── PersonCard.tsx
 
-.env # Contains Redis/Mapbox keys
-globals.css # Global styles
-layout.tsx # App shell
-page.tsx # Default home page
+├── login/page.tsx
+
+├── api/
+│ ├── send-location/route.ts
+│ ├── check-location/route.ts
+│ ├── delete-location/route.ts
+│ ├── get-user/route.ts
+│ └── check-login/route.ts
+
+lib/
+├── locationStore.ts # Redis operations
+├── redis.ts # Redis config
+
+.env # Secrets: Redis, Mapbox
+globals.css # Tailwind + custom styles
+layout.tsx # App layout
+page.tsx # Main entry
 
 yaml
 Copy
@@ -65,274 +60,117 @@ Edit
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ How It Works
 
-### 1. Clone the Repository
+### 👨‍💼 Auth
 
-```bash
-git clone https://github.com/golubhattuk01/we_can_cab_together.git
-cd we-can-cab-together
-2. Install Dependencies
+- Login via phone number + name
+- Session stored in an `HttpOnly` cookie (secure)
+- Automatically expires in **24 hours**
+
+### 📍 Location Posting
+
+- Users post their **current location** and **destination**
+- Redis stores it temporarily
+- Post is **auto-deleted after 3 hours**
+
+### 🔁 Matching
+
+- Shows nearby people with the same route (within 3 km)
+- Backend calculates matching using geo-coordinates
+- UI updates instantly with nearby matches
+
+---
+
+## 🧹 Data Cleanup
+
+- 🧍 User data (auth session): **Expires after 24 hours**
+- 📍 Location data: **Expires after 3 hours**
+- Managed with:
+  - `setTimeout()` in server code
+  - Optional Redis `EXPIRE` (TTL) for robustness
+
+---
+
+## 🚀 Dockerized Deployment
+
+- 5 container instances (`instance1a` to `instance5a`)
+- All run same app, load-balanced via:
+
+### 🔁 Caddy Example (round robin)
+
+```caddyfile
+cab.golu.codes {
+  reverse_proxy {
+    to instance1a:3000 instance2a:3000 instance3a:3000 instance4a:3000 instance5a:3000
+    lb_policy round_robin
+  }
+}
+🛠 GitHub Actions
+On push to master, GitHub Action builds once
+
+Starts or restarts 5 Docker containers
+
+All use the same image and .env variables
+
+💻 Local Development
+🔧 Install
 bash
 Copy
 Edit
+git clone https://github.com/golubhattuk01/we_can_cab_together.git
+cd we_can_cab_together
 npm install
-3. Setup Environment Variables
-Create a .env file in the root:
-
+📄 Setup .env
 env
 Copy
 Edit
 NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
 REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=your_password_if_any
-4. Run Redis
-If not already running, install and start Redis locally:
-
+REDIS_PASSWORD=your_redis_password
+🚀 Start
 bash
 Copy
 Edit
 redis-server
-5. Start the App
-bash
-Copy
-Edit
 npm run dev
-Visit http://localhost:3000
-
-👨‍💻 How It Works
-User Login: via phone + name (cookie-based)
-
-Location Selection: choose current & destination from autocomplete
-
-Backend Matchmaking: check all users in Redis for same route (within 3 km)
-
-UI Display: shows your post + list of others with matching locations
-
-✅ Features
-🔐 Cookie-based session system (secure, no database)
-
-📍 Auto-location match within 3km (both source and destination)
-
-🚫 One post per user — with delete/reset option
-
-🔄 Updates in real-time after sending/resetting
-
-🔎 Mapbox-powered search with autocomplete
-
-💾 Redis-backed lightweight storage (fast)
+Go to http://localhost:3000
 
 🧪 Sample User Flow
-Login with name and phone number
+Login with phone and name
 
-Choose "Current Location" and "Destination"
+Choose Current Location and Destination
 
 Click Send Location
 
-View your post + others going the same way
+See your post + nearby people going same route
 
-Optionally, click Delete My Post to start over
+Optionally delete and reset post
 
-🔐 Authentication
-Auth is handled via a POST to /api/check-login
+🔒 Authentication
+Session stored in HttpOnly cookie
 
-User data is saved in an HttpOnly cookie (not accessible in client-side JS)
+Auto-expiry in 24 hours (Max-Age=86400)
 
-/api/get-user retrieves the logged-in user on each load securely
+Only one active session per user
 
-📦 Deployment
-You can deploy this app easily on Vercel, Render, or any platform that supports Next.js and Redis.
+Secure backend-only cookie reading
 
-For production:
+📦 Deployment Tips
+Use a managed Redis service (like Upstash, RedisCloud)
 
-Use a managed Redis service (like Upstash or RedisCloud)
+Use Caddy for load balancing
 
-Secure your Mapbox token and Redis password
+Docker setup uses 5 container replicas
+
+Caddy supports health checks and load policies (e.g., round robin)
 
 📜 License
 MIT © [GAURAV BHATT]
 
 📬 Contact
-Feel free to raise issues or contact at youremail@example.com if you’d like to contribute, improve the UI, or build on top of this project.
+Want to collaborate or contribute?
 
-yaml
-Copy
-Edit
-
----
-
-Let me know if you'd like me to generate a **GIF preview**, a **live demo deploy guide**, or help integrate **Socket.IO for real-time updates**!
-
-
-
-
-
-
-
-You said:
-wrtie all in once so i can copy
-
-
-ChatGPT said:
-Sure! Here's the complete README.md content all in one place — you can copy and paste it directly into your project:
-
-md
-Copy
-Edit
-# 🚕 We Can Cab Together
-
-**We Can Cab Together** is a location-based travel-sharing web app that helps users find others nearby who are traveling to the same destination. This makes it easier to share cabs, autos, or rickshaws and reduce costs — especially useful in urban areas like universities, tech parks, or cities.
-
----
-
-## 🔍 Purpose
-
-> Help users find and connect with others going from nearby sources to nearby destinations within a 3 km radius, enabling real-time cab-sharing decisions.
-
----
-
-## 🧱 Tech Stack
-
-| Tech       | Purpose                                |
-|------------|----------------------------------------|
-| Next.js    | React-based frontend + API routing     |
-| Redis      | In-memory storage of location entries  |
-| Mapbox     | Location autocomplete & geo-matching   |
-| TailwindCSS| Simple, responsive UI styling          |
-
----
-
-## 📁 Project Structure
-
-app/
-├── (component)/home/helper/
-│ ├── Dashboard.tsx # Your shared + nearby users display
-│ ├── LocationForm.tsx # Main page UI
-│ ├── LocationInput.tsx # Input field with suggestions
-│ ├── MyLocationCard.tsx # Displays your own post
-│ ├── PeopleNearbyList.tsx # List of matching people
-│ └── PersonCard.tsx # Single person card
-│
-├── login/page.tsx # Simple login form
-│
-├── api/
-│ ├── send-location/route.ts # POST user location
-│ ├── check-location/route.ts # GET user and nearby data
-│ ├── delete-location/route.ts # DELETE user's post
-│ ├── get-user/route.ts # GET user from cookie
-│ └── check-login/route.ts # POST login and set cookie
-│
-lib/
-├── locationStore.ts # Add/Get/Delete logic in Redis
-├── redis.ts # Redis connection config
-
-.env # Contains Redis/Mapbox keys
-globals.css # Global styles
-layout.tsx # App shell
-page.tsx # Default home page
-
-yaml
-Copy
-Edit
-
----
-
-## ⚙️ Getting Started
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/golubhattuk01/we_can_cab_together.git
-cd we-can-cab-together
-2. Install Dependencies
-bash
-Copy
-Edit
-npm install
-3. Setup Environment Variables
-Create a .env file in the root:
-
-env
-Copy
-Edit
-NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=your_password_if_any
-4. Run Redis
-If not already running, install and start Redis locally:
-
-bash
-Copy
-Edit
-redis-server
-5. Start the App
-bash
-Copy
-Edit
-npm run dev
-Visit http://localhost:3000
-
-👨‍💻 How It Works
-User Login: via phone + name (cookie-based)
-
-Location Selection: choose current & destination from autocomplete
-
-Backend Matchmaking: check all users in Redis for same route (within 3 km)
-
-UI Display: shows your post + list of others with matching locations
-
-✅ Features
-🔐 Cookie-based session system (secure, no database)
-
-📍 Auto-location match within 3km (both source and destination)
-
-🚫 One post per user — with delete/reset option
-
-🔄 Updates in real-time after sending/resetting
-
-🔎 Mapbox-powered search with autocomplete
-
-💾 Redis-backed lightweight storage (fast)
-
-🧪 Sample User Flow
-Login with name and phone number
-
-Choose "Current Location" and "Destination"
-
-Click Send Location
-
-View your post + others going the same way
-
-Optionally, click Delete My Post to start over
-
-🔐 Authentication
-Auth is handled via a POST to /api/check-login
-
-User data is saved in an HttpOnly cookie (not accessible in client-side JS)
-
-/api/get-user retrieves the logged-in user on each load securely
-
-📦 Deployment
-You can deploy this app easily on Vercel, Render, or any platform that supports Next.js and Redis.
-
-For production:
-
-Use a managed Redis service (like Upstash or RedisCloud)
-
-Secure your Mapbox token and Redis password
-
-📜 License
-MIT © [GAURAV BHATT]
-
-📬 Contact
-Feel free to raise issues or contact at youremail@example.com if you’d like to contribute, improve the UI, or build on top of this project.
-
-yaml
-Copy
-Edit
-
----
-
-Let me know if you want to add badges, a project banner, or a one-click **Vercel deploy button** to this [GitHub README](f).
+📧 Email: youremail@example.com
+🌐 GitHub: golubhattuk01/we_can_cab_together
