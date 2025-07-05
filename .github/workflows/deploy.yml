@@ -1,4 +1,4 @@
-name: Deploy Docker App to ARM64 Server
+name: Fast Deploy of 2 Docker Instances to ARM64 Server
 
 on:
   push:
@@ -10,72 +10,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show Target Server Info
-        run: echo "Deploying to ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
-
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx (Multi-Arch)
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker Image for ARM64 and Export
-        run: |
-          docker buildx create --use
-          docker buildx build \
-            --platform linux/arm64 \
-            -t my-app-image \
-            --output type=docker \
-            .
-
-      - name: Save Docker Image to Tarball
-        run: docker save my-app-image -o my-app-image.tar
-
       - name: Install sshpass
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
-      - name: Copy Docker Image to Server
+      - name: Set Up Remote Docker Context
         run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            scp -o StrictHostKeyChecking=no \
-            my-app-image.tar \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/my-app-image.tar
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          docker context create remote \
+            --docker "host=ssh://${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}"
 
-      - name: Deploy Containers to Server
+      - name: Use Remote Docker Context
+        run: docker context use remote
+
+      - name: Build Image and Deploy to Server
         run: |
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-          ssh -o StrictHostKeyChecking=no \
-          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          echo "[`date`] 📦 Building image remotely"
+          docker build -t my-app-image .
 
+          echo "[`date`] 🧹 Removing old containers"
+          docker rm -f instance1a instance2a || true
+
+          echo "[`date`] 🗂 Creating .env on server"
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
             cd ~
-
-            echo "[\`date\`] ✅ Writing .env file"
             echo "NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}" > .env
             echo "REDIS_HOST=${REDIS_HOST}" >> .env
             echo "REDIS_PORT=${REDIS_PORT}" >> .env
             echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
+          ENDSSH
 
-            echo "[\`date\`] 📦 Loading Docker image"
-            docker load -i my-app-image.tar
-
-            echo "[\`date\`] 🧹 Removing old containers"
-            for i in \$(seq 1 5); do
-              docker rm -f instance\$i || true
-            done
-
-            echo "[\`date\`] 🚀 Starting containers on internal port 3000"
-            for i in \$(seq 1 5); do
-              docker run -d \
-                --name instance\$i \
-                --env-file .env \
-                --network coolify \
-                my-app-image
-            done
-
-            echo "[\`date\`] ✅ Deployment Finished"
-          EOF
+          echo "[`date`] 🚀 Running 2 containers"
+          for i in 1a 2a; do
+            docker run -d \
+              --name instance$i \
+              --env-file /home/${{ secrets.SERVER_USER }}/.env \
+              --network coolify \
+              my-app-image
+          done
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
