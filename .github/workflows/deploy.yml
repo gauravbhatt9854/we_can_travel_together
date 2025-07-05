@@ -26,11 +26,13 @@ jobs:
 
       - name: 🧹 Remove Old Containers
         run: |
-          docker rm -f instance1a instance2a || true
+          for i in 1a 2a 3a 4a 5a; do
+            docker rm -f instance$i || true
+          done
 
       - name: 🚀 Start New Containers
         run: |
-          for i in 1a 2a; do
+          for i in 1a 2a 3a 4a 5a; do
             docker run -d \
               --name instance$i \
               --env-file .env \
