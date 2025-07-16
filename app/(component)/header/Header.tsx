@@ -2,24 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 const Header = () => {
   const router = useRouter();
   const [hostname, setHostname] = useState('');
 
-  const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/logout', { method: 'POST' });
 
-      if (res.ok) {
-        router.push('/login');
-      } else {
-        console.error('Logout failed:', await res.json());
-      }
-    } catch (err) {
-      console.error('❌ Logout error:', err);
-    }
-  };
+  const handleLogout = () => {
+  signOut({
+    callbackUrl: "/login", // Redirect after logout (optional)
+  });
+};
 
   useEffect(() => {
     const fetchHostname = async () => {

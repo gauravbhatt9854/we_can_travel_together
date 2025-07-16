@@ -1,101 +1,104 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState, FormEvent } from "react";
 
-export default function LoginPage() {
+const LoginPage: React.FC = () => {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [number, setNumber] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const validate = (): string | null => {
+    const isNumberValid = /^\d{10}$/.test(number);
+    const isPasswordValid = /^\d{4}$/.test(password);
+    if (!isNumberValid) return "Enter 10-digit mobile number";
+    if (!isPasswordValid) return "Enter 4-digit numeric password";
+    return null;
+  };
+
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (!name || !phone || password.length !== 4) {
-      return setError('Name, phone, and 4-digit password are required.');
+    const error = validate();
+    if (error) {
+      setErrorMsg(error);
+      return;
     }
 
-    setLoading(true);
-    setError('');
+    const res = await signIn("credentials", {
+      number,
+      password,
+      redirect: false,
+    });
 
-    try {
-      const res = await fetch('/api/check-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, phone, password }),
-      });
-
-      const rawText = await res.text();
-      let data;
-
-      try {
-        data = JSON.parse(rawText);
-      } catch (err) {
-        console.error('❌ Invalid JSON:', rawText);
-        setError('Invalid server response');
-        return;
-      }
-
-      if (!res.ok) {
-        setError(data.error || 'Login failed.');
-        return;
-      }
-
-      localStorage.setItem('user', JSON.stringify(data.user));
-      router.push('/');
-    } catch (err) {
-      console.error(err);
-      setError('Something went wrong.');
-    } finally {
-      setLoading(false);
+    if (res?.ok) {
+      router.push("/");
+    } else {
+      setErrorMsg("Invalid credentials");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-center text-blue-700">Welcome Back!</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 px-4">
+      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Your Name"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label htmlFor="number" className="block text-sm font-medium text-gray-700">
+              Mobile Number <span className="text-gray-500">( +91 )</span>
+            </label>
+            <input
+              id="number"
+              type="text"
+              value={number}
+              onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
+              maxLength={10}
+              placeholder="10-digit number"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2 border"
+            />
+          </div>
 
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-
-          <input
-            type="password"
-            placeholder="4-digit Password"
-            maxLength={4}
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              4-Digit Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value.replace(/\D/g, ""))}
+              maxLength={4}
+              placeholder="1234"
+              required
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2 border"
+            />
+          </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
           >
-            {loading ? 'Checking...' : 'Login'}
+            Login
           </button>
+
+          <button
+            type="submit"
+            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition"
+            onClick={()=> router.push("/register")}
+          >
+            Register
+          </button>
+
+          {errorMsg && (
+            <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+          )}
         </form>
       </div>
     </div>
   );
-}
+};
+
+export default LoginPage;
