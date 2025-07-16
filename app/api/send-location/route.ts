@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const result = await updateUserLocation({ number, locatinon });
+    const result = await updateUserLocation({ number, location });
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 404 });

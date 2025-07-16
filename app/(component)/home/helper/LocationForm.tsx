@@ -108,6 +108,9 @@ const LocationForm: React.FC = () => {
 
     if (res.ok) {
       alert("Location cleared");
+      setHasValidLocations(()=> false);
+      setResults([]);
+
     } else {
       const error = await res.json();
       alert(`Error clearing location: ${error?.error}`);
@@ -131,11 +134,6 @@ const LocationForm: React.FC = () => {
       setDestinationSuggestions([]);
     }
   };
-
-
-  // console.log("user is :  ", user);
-  // console.log("session is :  ", session);
-
 
   const handleSend = async () => {
     if (!currentLatLng || !destinationLatLng || hasValidLocations || !user) return;
