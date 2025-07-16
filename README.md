@@ -211,7 +211,7 @@ MIT © [Gaurav Bhatt](https://github.com/gauravbhatt9854)
 ## 📬 Contact & Collaboration
 
 * ✉️ Email: [gbhatt570@gmail.com](mailto:gbhatt570@gmail.com)
-* 🔗 GitHub: [github.com/golubhattuk01/we\_can\_travel\_together](https://github.com/gauravbhatt9854/we_can_travel_together)
+* 🔗 GitHub: [github.com/gauravbhatt9854/we\_can\_travel\_together](https://github.com/gauravbhatt9854/we_can_travel_together)
 * 🌐 Live Site: [https://travel-partner.golu.codes](https://travel-partner.golu.codes)
 
 ---
