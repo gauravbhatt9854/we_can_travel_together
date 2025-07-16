@@ -1,176 +1,228 @@
-# 🚕 We Can Cab Together
+Absolutely! Here's your **fully updated and professional `README.md`** for the project **“We Can Travel Together”** (previously "We Can Cab Together"), with:
 
-**We Can Cab Together** is a real-time, location-based travel-sharing web app. It helps users find others nearby going to the same destination — ideal for cost-sharing cabs, autos, or rickshaws in colleges, offices, or urban cities.
+* Refined branding and concept
+* Updated deployment URL
+* Improved formatting and clarity
+* Developer and recruiter-friendly structure
 
-🔗 **Live Demo**: [https://cab.golu.codes](https://cab.golu.codes)
+---
+
+````markdown
+# 🚶‍♂️🚗 We Can Travel Together
+
+**We Can Travel Together** is a real-time, location-based travel-matching web app. It connects people traveling in the same direction — whether by cab, rickshaw, metro, or on foot — for smarter, cost-effective, and social commuting.
+
+🔗 **Live Demo**: [https://travel-partner.golu.codes](https://travel-partner.golu.codes)
 
 ---
 
 ## 🔍 Purpose
 
-> Help users connect and travel together from similar starting points to nearby destinations — saving money and time within a 3 km radius.
+> Help users discover others near them going in the **same direction** from similar origins to nearby destinations — enabling them to **travel together** and split costs within a ~3 km match radius.
 
 ---
 
 ## 🧱 Tech Stack
 
-| Tech       | Purpose                                      |
-|------------|----------------------------------------------|
-| **Next.js**    | Frontend + API backend in one framework     |
-| **Redis**      | Fast in-memory data store for live users    |
-| **Mapbox**     | Location autocomplete and geocoding         |
-| **TailwindCSS**| Responsive and clean styling                |
-| **Docker**     | Containerized deployment for scalability    |
-| **Caddy/Nginx**| Load balancer across multiple containers    |
+| Tech           | Purpose                                          |
+|----------------|--------------------------------------------------|
+| **Next.js**    | Fullstack React + API Routes                     |
+| **Redis**      | Fast in-memory store for live user locations     |
+| **Mapbox**     | Location autocomplete & reverse geocoding        |
+| **TailwindCSS**| Utility-first CSS for modern responsive UI       |
+| **Docker**     | Containerized deployment for multi-instance use  |
+| **Caddy/Nginx**| Load balancing between multiple containers        |
 
 ---
 
 ## 📁 Project Structure
 
+```bash
 app/
 ├── (component)/home/helper/
-│ ├── Dashboard.tsx
-│ ├── LocationForm.tsx
-│ ├── LocationInput.tsx
-│ ├── MyLocationCard.tsx
-│ ├── PeopleNearbyList.tsx
-│ └── PersonCard.tsx
+│   ├── Dashboard.tsx
+│   ├── LocationForm.tsx
+│   ├── LocationInput.tsx
+│   ├── MyLocationCard.tsx
+│   ├── PeopleNearbyList.tsx
+│   └── PersonCard.tsx
 
 ├── login/page.tsx
 
 ├── api/
-│ ├── send-location/route.ts
-│ ├── check-location/route.ts
-│ ├── delete-location/route.ts
-│ ├── get-user/route.ts
-│ └── check-login/route.ts
+│   ├── send-location/route.ts
+│   ├── check-location/route.ts
+│   ├── delete-location/route.ts
+│   ├── get-user/route.ts
+│   └── check-login/route.ts
 
 lib/
-├── locationStore.ts # Redis operations
-├── redis.ts # Redis config
+├── locationStore.ts      # Redis location logic
+├── redis.ts              # Redis config/setup
 
-.env # Secrets: Redis, Mapbox
-globals.css # Tailwind + custom styles
-layout.tsx # App layout
-page.tsx # Main entry
-
-yaml
-Copy
-Edit
+globals.css               # Tailwind + base styles
+layout.tsx                # Shared layout
+page.tsx                  # Main home entry
+````
 
 ---
 
 ## ⚙️ How It Works
 
-### 👨‍💼 Auth
+### 👤 Authentication
 
-- Login via phone number + name
-- Session stored in an `HttpOnly` cookie (secure)
-- Automatically expires in **24 hours**
+* Users log in using **phone number** and **name**
+* Secure `HttpOnly` cookie stores session using **NextAuth**
+* Auto-logout after **24 hours**
 
-### 📍 Location Posting
+### 📍 Location Sharing
 
-- Users post their **current location** and **destination**
-- Redis stores it temporarily
-- Post is **auto-deleted after 3 hours**
+* Users submit:
 
-### 🔁 Matching
+  * **Current location** (with geocoordinates)
+  * **Destination**
+* Redis stores user location data with TTL (Time To Live)
+* Posts auto-expire after **3 hours**
 
-- Shows nearby people with the same route (within 3 km)
-- Backend calculates matching using geo-coordinates
-- UI updates instantly with nearby matches
+### 🔍 Matchmaking
 
----
+* System compares:
 
-## 🧹 Data Cleanup
-
-- 🧍 User data (auth session): **Expires after 24 hours**
-- 📍 Location data: **Expires after 3 hours**
-- Managed with:
-  - `setTimeout()` in server code
-  - Optional Redis `EXPIRE` (TTL) for robustness
+  * Your `from` & `to` lat/lng
+  * With other users' saved routes
+* Returns nearby people **within 3 km**
+* UI shows dynamic live matches
 
 ---
 
-## 🚀 Dockerized Deployment
+## 🧹 Data Lifecycle
 
-- 5 container instances (`instance1a` to `instance5a`)
-- All run same app, load-balanced via:
+| Data Type     | Duration | Management                      |
+| ------------- | -------- | ------------------------------- |
+| Auth Session  | 24 hours | HttpOnly JWT cookie             |
+| Location Post | 3 hours  | `setTimeout()` + Redis `EXPIRE` |
 
-### 🔁 Caddy Example (round robin)
+---
+
+## 🚀 Docker Deployment
+
+### Scalable Setup (5 Instances)
+
+* App runs across **5 Docker containers**
+* Load balanced using **Caddy reverse proxy**
+
+#### 🌀 Caddy Round-Robin Example
 
 ```caddyfile
-cab.golu.codes {
+travel-partner.golu.codes {
   reverse_proxy {
     to instance1a:3000 instance2a:3000 instance3a:3000 instance4a:3000 instance5a:3000
     lb_policy round_robin
   }
 }
-🛠 GitHub Actions
-On push to master, GitHub Action builds once
+```
 
-Starts or restarts 5 Docker containers
+---
 
-All use the same image and .env variables
+## 🧪 Sample User Flow
 
-💻 Local Development
-🔧 Install
-bash
-Copy
-Edit
-git clone https://github.com/golubhattuk01/we_can_cab_together.git
-cd we_can_cab_together
+1. Login with your mobile number + name
+2. Search and select **Current Location** + **Destination**
+3. Click **Send Location**
+4. Instantly see:
+
+   * Your route summary
+   * Nearby users traveling similar paths
+5. Optionally **delete/reset** your post
+
+---
+
+## 🧰 Local Development
+
+### 🔧 Install Dependencies
+
+```bash
+git clone https://github.com/gauravbhatt9854/we_can_travel_together.git
+cd we_can_travel_together
 npm install
-📄 Setup .env
-env
-Copy
-Edit
+```
+
+### 📄 Setup `.env`
+
+```env
 NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=your_redis_password
-🚀 Start
-bash
-Copy
-Edit
+```
+
+### 🚀 Start Development Server
+
+```bash
+# Start Redis locally
 redis-server
+
+# Run the dev server
 npm run dev
-Go to http://localhost:3000
 
-🧪 Sample User Flow
-Login with phone and name
+# Open in browser
+http://localhost:3000
+```
 
-Choose Current Location and Destination
+---
 
-Click Send Location
+## 🔐 Authentication Notes
 
-See your post + nearby people going same route
+* JWT stored in secure, HttpOnly cookie
+* Single session per user
+* Cookie auto-expires in 24h (Max-Age = 86400)
+* Session handled entirely on the server
 
-Optionally delete and reset post
+---
 
-🔒 Authentication
-Session stored in HttpOnly cookie
+## 📦 Deployment Notes
 
-Auto-expiry in 24 hours (Max-Age=86400)
+* Use **Redis Cloud** (e.g., Upstash) for production scale
+* Run multiple app containers via **Docker Compose / K8s**
+* Use **Caddy/Nginx** to:
 
-Only one active session per user
+  * Terminate SSL
+  * Load balance across replicas
+  * Set health checks
 
-Secure backend-only cookie reading
+---
 
-📦 Deployment Tips
-Use a managed Redis service (like Upstash, RedisCloud)
+## 🧩 Future Ideas
 
-Use Caddy for load balancing
+* 🧭 Route distance optimization
+* 🗺️ Show people on a map view (Mapbox markers)
+* 🔔 Real-time chat between matched users
+* 📅 Schedule rides in advance
+* 📱 PWA/mobile-first version
 
-Docker setup uses 5 container replicas
+---
 
-Caddy supports health checks and load policies (e.g., round robin)
+## 📜 License
 
-📜 License
-MIT © [GAURAV BHATT]
+MIT © [Gaurav Bhatt](https://github.com/gauravbhatt9854)
 
-📬 Contact
-Want to collaborate or contribute?
+---
 
-📧 Email: youremail@example.com
-🌐 GitHub: golubhattuk01/we_can_cab_together
+## 📬 Contact & Collaboration
+
+* ✉️ Email: [gbhatt570@gmail.com](mailto:gbhatt570@gmail.com)
+* 🔗 GitHub: [github.com/golubhattuk01/we\_can\_travel\_together](https://github.com/gauravbhatt9854/we_can_travel_together)
+* 🌐 Live Site: [https://travel-partner.golu.codes](https://travel-partner.golu.codes)
+
+---
+
+```
+
+Let me know if you want:
+- 🌈 Badges (like Vercel, Redis, etc.)
+- 📸 Screenshots/GIFs
+- 🧪 API documentation (OpenAPI/Swagger)
+- 🐳 Docker Compose setup
+
+Happy to help you polish it even further!
+```
