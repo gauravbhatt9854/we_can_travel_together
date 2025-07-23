@@ -19,6 +19,12 @@ jobs:
           echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
           echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "REDIS_KEY=${{ secrets.REDIS_KEY }}" >> .env
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env
+          echo "SERVER_HOST=${{ secrets.SERVER_HOST }}" >> .env
+          echo "SERVER_USER=${{ secrets.SERVER_USER }}" >> .env
+          echo "SERVER_PASSWORD=${{ secrets.SERVER_PASSWORD }}" >> .env
+          echo "DISTANCE=${{ secrets.DISTANCE }}" >> .env
 
       - name: 🛠️ Build Docker Image
         run: |
